@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         syntaxCheck="false"
+         bootstrap="../tests/bootstrap.php"
+         verbose="true"
+>
+    <testsuites>
+        <testsuite name="KafkaTalker tests suite">
+            <directory suffix="Test.php">../tests/</directory>
+        </testsuite>
+    </testsuites>
+
+    <php>
+        <env name="env" value="test"/>
+    </php>
+
+    <filter>
+        <whitelist addUncoveredFilesFromWhitelist="true" processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">../src</directory>
+            <!--<exclude>
+                <directory>../tests</directory>
+                <file>../src/routes.php</file>
+            </exclude>-->
+        </whitelist>
+    </filter>
+
+    <logging>
+        <log type="coverage-html" target="coverage"/>
+        <log type="coverage-clover" target="logs/clover.xml"/>
+        <log type="coverage-crap4j" target="logs/crap4j.xml"/>
+        <log type="junit" target="logs/junit.xml" logIncompleteSkipped="false"/>
+    </logging>
+</phpunit>

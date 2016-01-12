@@ -1,0 +1,26 @@
+{
+    "name": "tolejarz/kafka-talker",
+    "description": "Kafka client for PHP",
+    "type": "library",
+    "keywords": [
+        "Client",
+        "Kafka"
+    ],
+    "homepage": "http://www.swanlinux.net",
+    "license": "BSD-3-Clause",
+    "autoload" : {
+        "psr-0" : {
+            "KafkaTalker" : "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-0": {
+            "KafkaTalkerTest\\": "tests/"
+        }
+    },
+    "require": {
+    },
+    "require-dev": {
+        "phpunit/phpunit": "5.0.*"
+    }
+}
