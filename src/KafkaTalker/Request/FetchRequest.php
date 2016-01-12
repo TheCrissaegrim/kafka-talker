@@ -210,7 +210,6 @@ class FetchRequest extends AbstractRequest
                         $cursor += $keySize;
                         $read += $keySize;
                     } else {
-                        printf("HAAAAAAAAAAAAAAA\n");
                         $key = null;
                     }
 
