@@ -137,7 +137,7 @@ class OffsetFetchRequest extends AbstractRequest
                 }
                 $cursor += 2;
 
-                $partitions[] = [
+                $partitions[$partitionId] = [
                     'PartitionId'   => $partitionId,
                     'Offset'        => $offset,
                     'Metadata'      => $metadata,
@@ -145,7 +145,7 @@ class OffsetFetchRequest extends AbstractRequest
                 ];
             }
 
-            $topics[] = [
+            $topics[$topic] = [
                 'Topic'         => $topic,
                 'Partitions'    => $partitions,
             ];
