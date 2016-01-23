@@ -9,11 +9,11 @@ class OffsetFetchRequestTest extends KafkaTalkerTest
 {
     public function testReceive()
     {
-        $client = new Client($this->host, $this->port, ['debug' => $this->debug, 'kafka_version' => '0.8.2.2']);
+        $client = new Client($this->host, $this->port, ['kafka_version' => '0.8.2.2']);
 
         $correlationId = mt_rand(-32768, 32767);
 
-        $offsetFetchRequest = new OffsetFetchRequest($client, ['debug' => $this->debug]);
+        $offsetFetchRequest = new OffsetFetchRequest($client);
         $offsetFetchRequest->setCorrelationId($correlationId);
         $offsetFetchRequest->send('toto', ['test1' => [0]]);
         $response = $offsetFetchRequest->receive();

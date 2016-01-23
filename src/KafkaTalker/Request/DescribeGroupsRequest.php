@@ -1,6 +1,7 @@
 <?php
 namespace KafkaTalker\Request;
 
+use KafkaTalker\Logger;
 use KafkaTalker\Packer;
 
 class DescribeGroupsRequest extends AbstractRequest
@@ -31,184 +32,132 @@ class DescribeGroupsRequest extends AbstractRequest
         // Read response length
         $responseLength = $this->client->read(4);
         $responseLength = Packer::unpackSignedInt32($responseLength);
-        if ($this->debug) {
-            printf("Response length: %s\n", var_export($responseLength, true));
-        }
+        Logger::log('Response length: %s', var_export($responseLength, true));
 
         // Read response
         $response = $this->client->read($responseLength);
-        if ($this->debug) {
-            printf("Response (packed): %s\n", var_export($response, true));
-        }
+        Logger::log('Response (packed): %s', var_export($response, true));
 
         $cursor = 0;
 
         // Read CorrelationId
         $correlationId = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> CorrelationId: %s\n", var_export($correlationId, true));
-        }
+        Logger::log('> CorrelationId: %s', var_export($correlationId, true));
         $cursor += 4;
 
         // Read Group count
         $groupCount = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> Group count: %s\n", var_export($groupCount, true));
-        }
+        Logger::log('> Group count: %s', var_export($groupCount, true));
         $cursor += 4;
 
         // Read Groups
         $groups = [];
         for ($i = 1; $i <= $groupCount; $i++) {
-            if ($this->debug) {
-                printf("    > [Group #%d]\n", $i);
-            }
+            Logger::log('    > [Group #%d]', $i);
 
             // Read ErrorCode
             $errorCode = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-            if ($this->debug) {
-                printf("        > ErrorCode: %s\n", var_export($errorCode, true));
-            }
+            Logger::log('        > ErrorCode: %s', var_export($errorCode, true));
             $cursor += 2;
 
             // Read GroupId length
             $groupIdLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-            if ($this->debug) {
-                printf("        > GroupId length: %s\n", var_export($groupIdLength, true));
-            }
+            Logger::log('        > GroupId length: %s', var_export($groupIdLength, true));
             $cursor += 2;
 
             // Read GroupId
             $groupId = substr($response, $cursor, $groupIdLength);
-            if ($this->debug) {
-                printf("        > GroupId: %s\n", var_export($groupId, true));
-            }
+            Logger::log('        > GroupId: %s', var_export($groupId, true));
             $cursor += $groupIdLength;
 
             // Read State length
             $stateLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-            if ($this->debug) {
-                printf("        > State length: %s\n", var_export($stateLength, true));
-            }
+            Logger::log('        > State length: %s', var_export($stateLength, true));
             $cursor += 2;
 
             // Read State
             $state = substr($response, $cursor, $stateLength);
-            if ($this->debug) {
-                printf("        > State: %s\n", var_export($state, true));
-            }
+            Logger::log('        > State: %s', var_export($state, true));
             $cursor += $stateLength;
 
             // Read ProtocolType length
             $protocolTypeLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-            if ($this->debug) {
-                printf("        > ProtocolType length: %s\n", var_export($protocolTypeLength, true));
-            }
+            Logger::log('        > ProtocolType length: %s', var_export($protocolTypeLength, true));
             $cursor += 2;
 
             // Read ProtocolType
             $protocolType = substr($response, $cursor, $protocolTypeLength);
-            if ($this->debug) {
-                printf("        > ProtocolType: %s\n", var_export($protocolType, true));
-            }
+            Logger::log('        > ProtocolType: %s', var_export($protocolType, true));
             $cursor += $protocolTypeLength;
 
             // Read Protocol length
             $protocolLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-            if ($this->debug) {
-                printf("        > Protocol length: %s\n", var_export($protocolLength, true));
-            }
+            Logger::log('        > Protocol length: %s', var_export($protocolLength, true));
             $cursor += 2;
 
             // Read Protocol
             $protocol = substr($response, $cursor, $protocolLength);
-            if ($this->debug) {
-                printf("        > Protocol: %s\n", var_export($protocol, true));
-            }
+            Logger::log('        > Protocol: %s', var_export($protocol, true));
             $cursor += $protocolLength;
 
             // Read Member count
             $memberCount = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-            if ($this->debug) {
-                printf("        > Member count: %s\n", var_export($memberCount, true));
-            }
+            Logger::log('        > Member count: %s', var_export($memberCount, true));
             $cursor += 4;
 
             // Read Members
             $members = [];
             for ($j = 1; $j <= $memberCount; $j++) {
-                if ($this->debug) {
-                    printf("            > [Member #%d]\n", $j);
-                }
+                Logger::log('            > [Member #%d]', $j);
 
                 // Read MemberId length
                 $memberIdLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-                if ($this->debug) {
-                    printf("                > MemberId length: %s\n", var_export($memberIdLength, true));
-                }
+                Logger::log('                > MemberId length: %s', var_export($memberIdLength, true));
                 $cursor += 2;
 
                 // Read MemberId
                 $memberId = substr($response, $cursor, $memberIdLength);
-                if ($this->debug) {
-                    printf("                > MemberId: %s\n", var_export($memberId, true));
-                }
+                Logger::log('                > MemberId: %s', var_export($memberId, true));
                 $cursor += $memberIdLength;
 
                 // Read ClientId length
                 $clientIdLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-                if ($this->debug) {
-                    printf("                > ClientId length: %s\n", var_export($clientIdLength, true));
-                }
+                Logger::log('                > ClientId length: %s', var_export($clientIdLength, true));
                 $cursor += 2;
 
                 // Read ClientId
                 $clientId = substr($response, $cursor, $clientIdLength);
-                if ($this->debug) {
-                    printf("                > ClientId: %s\n", var_export($clientId, true));
-                }
+                Logger::log('                > ClientId: %s', var_export($clientId, true));
                 $cursor += $clientIdLength;
 
                 // Read ClientHost length
                 $clientHostLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-                if ($this->debug) {
-                    printf("                > ClientHost length: %s\n", var_export($clientHostLength, true));
-                }
+                Logger::log('                > ClientHost length: %s', var_export($clientHostLength, true));
                 $cursor += 2;
 
                 // Read ClientHost
                 $clientHost = substr($response, $cursor, $clientHostLength);
-                if ($this->debug) {
-                    printf("                > ClientHost: %s\n", var_export($clientHost, true));
-                }
+                Logger::log('                > ClientHost: %s', var_export($clientHost, true));
                 $cursor += $clientHostLength;
 
                 // Read MemberMetadata length
                 $memberMetadataLength = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-                if ($this->debug) {
-                    printf("                > MemberMetadata length: %s\n", var_export($memberMetadataLength, true));
-                }
+                Logger::log('                > MemberMetadata length: %s', var_export($memberMetadataLength, true));
                 $cursor += 4;
 
                 // Read MemberMetadata
                 $memberMetadata = substr($response, $cursor, $memberMetadataLength);
-                if ($this->debug) {
-                    printf("                > MemberMetadata: %s\n", var_export($memberMetadata, true));
-                }
+                Logger::log('                > MemberMetadata: %s', var_export($memberMetadata, true));
                 $cursor += $memberMetadataLength;
 
                 // Read MemberAssignment length
                 $memberAssignmentLength = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-                if ($this->debug) {
-                    printf("                > MemberAssignment length: %s\n", var_export($memberAssignmentLength, true));
-                }
+                Logger::log('                > MemberAssignment length: %s', var_export($memberAssignmentLength, true));
                 $cursor += 4;
 
                 // Read MemberAssignment
                 $memberAssignment = substr($response, $cursor, $memberAssignmentLength);
-                if ($this->debug) {
-                    printf("                > MemberAssignment: %s\n", var_export($memberAssignment, true));
-                }
+                Logger::log('                > MemberAssignment: %s', var_export($memberAssignment, true));
                 $cursor += $memberAssignmentLength;
 
                 $members[] = [

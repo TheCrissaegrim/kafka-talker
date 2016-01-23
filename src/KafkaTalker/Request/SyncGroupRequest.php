@@ -1,6 +1,7 @@
 <?php
 namespace KafkaTalker\Request;
 
+use KafkaTalker\Logger;
 use KafkaTalker\Packer;
 
 class SyncGroupRequest extends AbstractRequest
@@ -43,44 +44,32 @@ class SyncGroupRequest extends AbstractRequest
         // Read response length
         $responseLength = $this->client->read(4);
         $responseLength = Packer::unpackSignedInt32($responseLength);
-        if ($this->debug) {
-            printf("Reponse length: %s\n", var_export($responseLength, true));
-        }
+        Logger::log('Reponse length: %s', var_export($responseLength, true));
 
         // Read response
         $response = $this->client->read($responseLength);
-        if ($this->debug) {
-            printf("Response (packed): %s\n", var_export($response, true));
-        }
+        Logger::log('Response (packed): %s', var_export($response, true));
 
         $cursor = 0;
 
         // Read CorrelationId
         $correlationId = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> CorrelationId: %s\n", var_export($correlationId, true));
-        }
+        Logger::log('> CorrelationId: %s', var_export($correlationId, true));
         $cursor += 4;
 
         // Read ErrorCode
         $errorCode = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-        if ($this->debug) {
-            printf("> ErrorCode: %s\n", var_export($errorCode, true));
-        }
+        Logger::log('> ErrorCode: %s', var_export($errorCode, true));
         $cursor += 2;
 
         // Read MemberAssignment length
         $memberAssignmentLength = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> MemberAssignment length: %s\n", var_export($memberAssignmentLength, true));
-        }
+        Logger::log('> MemberAssignment length: %s', var_export($memberAssignmentLength, true));
         $cursor += 4;
 
         // Read MemberAssignment
         $memberAssignment = substr($response, $cursor, $memberAssignmentLength);
-        if ($this->debug) {
-            printf("> MemberAssignment: %s\n", var_export($memberAssignment, true));
-        }
+        Logger::log('> MemberAssignment: %s', var_export($memberAssignment, true));
         $cursor += $memberAssignmentLength;
 
         return [

@@ -9,11 +9,11 @@ class HeartBeatRequestTest extends KafkaTalkerTest
 {
     public function testReceive()
     {
-        $client = new Client($this->host, $this->port, ['debug' => $this->debug, 'kafka_version' => '0.8.2.2']);
+        $client = new Client($this->host, $this->port, ['kafka_version' => '0.8.2.2']);
 
         $correlationId = mt_rand(-32768, 32767);
 
-        $heartBeatRequest = new HeartBeatRequest($client, ['debug' => $this->debug]);
+        $heartBeatRequest = new HeartBeatRequest($client);
         $heartBeatRequest->setCorrelationId($correlationId);
         $heartBeatRequest->send('GroupId1', 'GenerationId1', 'MemberId1');
         $response = $heartBeatRequest->receive();

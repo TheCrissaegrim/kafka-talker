@@ -2,6 +2,7 @@
 namespace KafkaTalker;
 
 use KafkaTalker\Exception\KafkaTalkerException;
+use KafkaTalker\Logger;
 
 class Client
 {
@@ -15,8 +16,6 @@ class Client
 
     public function __construct($host, $port, $options = [])
     {
-        $this->debug = !empty($options['debug']);
-
         if (empty($host)) {
             throw new KafkaTalkerException('Missing host');
         }
@@ -45,15 +44,11 @@ class Client
 
     public function close()
     {
-        if ($this->debug) {
-            printf("[Client::close()] Closing socket handler...\n");
-        }
+        Logger::log('[Client::close()] Closing socket handler...');
 
         $close = fclose($this->socket);
 
-        if ($this->debug) {
-            printf("[Client::close()]     > fclose returned: %s\n", var_export($close, true));
-        }
+        Logger::log('[Client::close()]     > fclose returned: %s', var_export($close, true));
 
         return $close;
     }
@@ -78,9 +73,7 @@ class Client
         $read = [$this->socket];
         $readable = stream_select($read, $null, $null, 3000, 3000);
 
-        if ($this->debug) {
-            printf("[Client::read()] Reading %d bytes from socket...\n", var_export($length, true));
-        }
+        Logger::log('[Client::read()] Reading %d bytes from socket...', var_export($length, true));
 
         $retry = 0;
 
@@ -95,9 +88,7 @@ class Client
             }
         }
 
-        if ($this->debug) {
-            printf("[Client::read()]    > fread returned: %s\n", var_export($data, true));
-        }
+        Logger::log('[Client::read()]    > fread returned: %s', var_export($data, true));
 
         return $data;
     }
@@ -125,9 +116,7 @@ class Client
 
     public function write($data)
     {
-        if ($this->debug) {
-            printf("[Client::write()] Sending data into socket...\n");
-        }
+        Logger::log('[Client::write()] Sending data into socket...');
 
         $write = [$this->socket];
         $dataSize = strlen($data);
@@ -148,9 +137,7 @@ class Client
             }
         }
 
-        if ($this->debug) {
-            printf("[Client::write()]     > %d on %d sent bytes\n", $written, strlen($data));
-        }
+        Logger::log('[Client::write()]     > %d on %d sent bytes', $written, strlen($data));
 
         return $written;
     }

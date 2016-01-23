@@ -1,6 +1,7 @@
 <?php
 namespace KafkaTalker\Request;
 
+use KafkaTalker\Logger;
 use KafkaTalker\Packer;
 
 class GroupCoordinatorRequest extends AbstractRequest
@@ -27,58 +28,42 @@ class GroupCoordinatorRequest extends AbstractRequest
         // Read response length
         $responseLength = $this->client->read(4);
         $responseLength = Packer::unpackSignedInt32($responseLength);
-        if ($this->debug) {
-            printf("Response length: %s\n", var_export($responseLength, true));
-        }
+        Logger::log('Response length: %s', var_export($responseLength, true));
 
         // Read response
         $response = $this->client->read($responseLength);
-        if ($this->debug) {
-            printf("Response (packed): %s\n", var_export($response, true));
-        }
+        Logger::log('Response (packed): %s', var_export($response, true));
 
         $cursor = 0;
 
         // Read CorrelationId
         $correlationId = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> CorrelationId: %s\n", var_export($correlationId, true));
-        }
+        Logger::log('> CorrelationId: %s', var_export($correlationId, true));
         $cursor += 4;
 
         // Read ErrorCode
         $errorCode = Packer::unpackSignedInt16(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> ErrorCode: %s\n", var_export($errorCode, true));
-        }
+        Logger::log('> ErrorCode: %s', var_export($errorCode, true));
         $cursor += 2;
 
         // Read CoordinatorId
         $coordinatorId = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> CoordinatorId: %s\n", var_export($coordinatorId, true));
-        }
+        Logger::log('> CoordinatorId: %s', var_export($coordinatorId, true));
         $cursor += 4;
 
         // Read CoordinatorHost length
         $coordinatorHostLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-        if ($this->debug) {
-            printf("> CoordinatorHost length: %s\n", var_export($coordinatorHostLength, true));
-        }
+        Logger::log('> CoordinatorHost length: %s', var_export($coordinatorHostLength, true));
         $cursor += 2;
 
         // Read CoordinatorHost
         $coordinatorHost = substr($response, $cursor, $coordinatorHostLength);
-        if ($this->debug) {
-            printf("> CoordinatorHost: %s\n", var_export($coordinatorHost, true));
-        }
+        Logger::log('> CoordinatorHost: %s', var_export($coordinatorHost, true));
         $cursor += $coordinatorHostLength;
 
         // Read CoordinatorPort
         $coordinatorPort = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> CoordinatorPort: %s\n", var_export($coordinatorPort, true));
-        }
+        Logger::log('> CoordinatorPort: %s', var_export($coordinatorPort, true));
         $cursor += 4;
 
         return [

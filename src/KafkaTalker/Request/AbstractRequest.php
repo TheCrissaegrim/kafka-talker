@@ -1,6 +1,7 @@
 <?php
 namespace KafkaTalker\Request;
 
+use KafkaTalker\Logger;
 use KafkaTalker\Packer;
 
 abstract class AbstractRequest
@@ -10,15 +11,10 @@ abstract class AbstractRequest
 
     protected $client;
     protected $correlationId = null;
-    protected $debug = false;
 
     public function __construct($client, $options = [])
     {
-        if ($this->debug) {
-            printf("%s::__construct\n", get_called_class());
-        }
-
-        $this->debug = !empty($options['debug']);
+        Logger::log('%s::__construct', get_called_class());
 
         $this->client = $client;
     }

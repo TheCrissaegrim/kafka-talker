@@ -9,11 +9,11 @@ class GroupCoordinatorRequestTest extends KafkaTalkerTest
 {
     public function testReceive()
     {
-        $client = new Client($this->host, $this->port, ['debug' => $this->debug, 'kafka_version' => '0.8.2.2']);
+        $client = new Client($this->host, $this->port, ['kafka_version' => '0.8.2.2']);
 
         $correlationId = mt_rand(-32768, 32767);
 
-        $groupCoordinatorRequest = new GroupCoordinatorRequest($client, ['debug' => $this->debug]);
+        $groupCoordinatorRequest = new GroupCoordinatorRequest($client);
         $groupCoordinatorRequest->setCorrelationId($correlationId);
         $groupCoordinatorRequest->send('ConsumerGroup1');
         $response = $groupCoordinatorRequest->receive();

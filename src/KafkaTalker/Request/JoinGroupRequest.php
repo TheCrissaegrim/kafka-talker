@@ -1,6 +1,7 @@
 <?php
 namespace KafkaTalker\Request;
 
+use KafkaTalker\Logger;
 use KafkaTalker\Packer;
 
 class JoinGroupRequest extends AbstractRequest
@@ -48,123 +49,89 @@ class JoinGroupRequest extends AbstractRequest
         // Read response length
         $responseLength = $this->client->read(4);
         $responseLength = Packer::unpackSignedInt32($responseLength);
-        if ($this->debug) {
-            printf("Response length: %s\n", var_export($responseLength, true));
-        }
+        Logger::log('Response length: %s', var_export($responseLength, true));
 
         // Read response
         $response = $this->client->read($responseLength);
-        if ($this->debug) {
-            printf("Response (packed): %s\n", var_export($response, true));
-        }
+        Logger::log('Response (packed): %s', var_export($response, true));
 
         $cursor = 0;
 
         // Read CorrelationId
         $correlationId = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> CorrelationId: %s\n", var_export($correlationId, true));
-        }
+        Logger::log('> CorrelationId: %s', var_export($correlationId, true));
         $cursor += 4;
 
         // Read ErrorCode
         $errorCode = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-        if ($this->debug) {
-            printf("> ErrorCode: %s\n", var_export($errorCode, true));
-        }
+        Logger::log('> ErrorCode: %s', var_export($errorCode, true));
         $cursor += 2;
 
         // Read GenerationId
         $generationId = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> GenerationId: %s\n", var_export($generationId, true));
-        }
+        Logger::log('> GenerationId: %s', var_export($generationId, true));
         $cursor += 4;
 
         // Read GroupProtocol length
         $groupProtocolLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-        if ($this->debug) {
-            printf("> GroupProtocol length: %s\n", var_export($groupProtocolLength, true));
-        }
+        Logger::log('> GroupProtocol length: %s', var_export($groupProtocolLength, true));
         $cursor += 2;
 
         // Read GroupProtocol
         $groupProtocol = substr($response, $cursor, $groupProtocolLength);
-        if ($this->debug) {
-            printf("> GroupProtocol: %s\n", var_export($groupProtocol, true));
-        }
+        Logger::log('> GroupProtocol: %s', var_export($groupProtocol, true));
         $cursor += $groupProtocolLength;
 
         // Read LeaderId length
         $leaderIdLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-        if ($this->debug) {
-            printf("> LeaderId length: %s\n", var_export($leaderIdLength, true));
-        }
+        Logger::log('> LeaderId length: %s', var_export($leaderIdLength, true));
         $cursor += 2;
 
         // Read LeaderId
         $leaderId = substr($response, $cursor, $leaderIdLength);
-        if ($this->debug) {
-            printf("> LeaderId: %s\n", var_export($leaderId, true));
-        }
+        Logger::log('> LeaderId: %s', var_export($leaderId, true));
         $cursor += $leaderIdLength;
 
         // Read MemberId length
         $memberIdLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-        if ($this->debug) {
-            printf("> MemberId length: %s\n", var_export($memberIdLength, true));
-        }
+        Logger::log('> MemberId length: %s', var_export($memberIdLength, true));
         $cursor += 2;
 
         // Read MemberId
         $memberId = substr($response, $cursor, $memberIdLength);
-        if ($this->debug) {
-            printf("> MemberId: %s\n", var_export($memberIdLength, true));
-        }
+        Logger::log('> MemberId: %s', var_export($memberIdLength, true));
         $cursor += $memberIdLength;
 
         // Read Member count
         $memberCount = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> Member count: %s\n", var_export($memberCount, true));
-        }
+        Logger::log('> Member count: %s', var_export($memberCount, true));
         $cursor += 4;
 
         // Read Members
         $members = [];
         for ($i = 1; $i <= $memberCount; $i++) {
-            if ($this->debug) {
-                printf("    > [Member #%d]\n", $i);
-            }
+            Logger::log('    > [Member #%d]', $i);
 
             // Read MemberId length
             $memberIdLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-            if ($this->debug) {
-                printf("        > MemberId length: %s\n", var_export($memberIdLength, true));
-            }
+            Logger::log('        > MemberId length: %s', var_export($memberIdLength, true));
             $cursor += 2;
 
             // Read MemberId
             $memberId = substr($response, $cursor, $memberIdLength);
-            if ($this->debug) {
-                printf("        > MemberId: %s\n", var_export($memberIdLength, true));
-            }
+            Logger::log('        > MemberId: %s', var_export($memberIdLength, true));
             $cursor += $memberIdLength;
 
             // TODO: read MemberMetaData
 
             // Read MemberMetaData size
             $memberMetaDataSize = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-            if ($this->debug) {
-                printf("        > MemberMetaData size: %s\n", var_export($memberMetaDataSize, true));
-            }
+            Logger::log('        > MemberMetaData size: %s', var_export($memberMetaDataSize, true));
             $cursor += 4;
 
             // Read MemberMetaData
             $memberMetaData = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-            if ($this->debug) {
-                printf("        > MemberMetaData: %s\n", var_export($memberMetaData, true));
-            }
+            Logger::log('        > MemberMetaData: %s', var_export($memberMetaData, true));
             $cursor += $memberMetaDataSize;
 
             $members[] = [

@@ -1,6 +1,7 @@
 <?php
 namespace KafkaTalker\Request;
 
+use KafkaTalker\Logger;
 use KafkaTalker\Packer;
 
 class FetchRequest extends AbstractRequest
@@ -57,93 +58,67 @@ class FetchRequest extends AbstractRequest
         // Read response length
         $responseLength = $this->client->read(4);
         $responseLength = Packer::unpackSignedInt32($responseLength);
-        if ($this->debug) {
-            printf("Response length: %s\n", var_export($responseLength, true));
-        }
+        Logger::log('Response length: %s', var_export($responseLength, true));
 
         // Read response
         $response = $this->client->read($responseLength);
-        if ($this->debug) {
-            printf("Response (packed): %s\n", var_export($response, true));
-        }
+        Logger::log('Response (packed): %s', var_export($response, true));
 
         $cursor = 0;
 
         // Read CorrelationId
         $correlationId = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> CorrelationId: %s\n", var_export($correlationId, true));
-        }
+        Logger::log('> CorrelationId: %s', var_export($correlationId, true));
         $cursor += 4;
 
         // Read Topics count
         $topicCount = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> Topic count: %s\n", var_export($topicCount, true));
-        }
+        Logger::log('> Topic count: %s', var_export($topicCount, true));
         $cursor += 4;
 
         // Read Topics
         $topics = [];
         for ($i = 1; $i <= $topicCount; $i++) {
-            if ($this->debug) {
-                printf("    > [Topic #%d]\n", $i);
-            }
+            Logger::log('    > [Topic #%d]', $i);
 
             // Read Topic length
             $topicLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-            if ($this->debug) {
-                printf("    > Topic length: %s\n", var_export($topicLength, true));
-            }
+            Logger::log('    > Topic length: %s', var_export($topicLength, true));
             $cursor += 2;
 
             // Read Topic
             $topic = substr($response, $cursor, $topicLength);
-            if ($this->debug) {
-                printf("    > Topic: %s\n", var_export($topic, true));
-            }
+            Logger::log('    > Topic: %s', var_export($topic, true));
             $cursor += $topicLength;
 
             // Read Partition count
             $partitionCount = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-            if ($this->debug) {
-                printf("    > Partition count: %s\n", var_export($partitionCount, true));
-            }
+            Logger::log('    > Partition count: %s', var_export($partitionCount, true));
             $cursor += 4;
 
             // Read Partitions
             $partitions = [];
             for ($j = 1; $j <= $partitionCount; $j++) {
-                if ($this->debug) {
-                    printf("        > [Partition #%d]\n", $j);
-                }
+                Logger::log('        > [Partition #%d]', $j);
 
                 // Read Partition
                 $partitionId = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-                if ($this->debug) {
-                    printf("            > PartitionId: %s\n", var_export($partitionId, true));
-                }
+                Logger::log('            > PartitionId: %s', var_export($partitionId, true));
                 $cursor += 4;
 
                 // Read ErrorCode
                 $errorCode = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-                if ($this->debug) {
-                    printf("                > ErrorCode: %s\n", var_export($errorCode, true));
-                }
+                Logger::log('                > ErrorCode: %s', var_export($errorCode, true));
                 $cursor += 2;
 
                 // Read HighwaterMarkOffset
                 $highwaterMarkOffset = Packer::unpackSignedInt64(substr($response, $cursor, 8));
-                if ($this->debug) {
-                    printf("                > HighwaterMarkOffset: %s\n", var_export($highwaterMarkOffset, true));
-                }
+                Logger::log('                > HighwaterMarkOffset: %s', var_export($highwaterMarkOffset, true));
                 $cursor += 8;
 
                 // Read MessageSet length
                 $messageSetLength = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-                if ($this->debug) {
-                    printf("                > MessageSet length: %s\n", var_export($messageSetLength, true));
-                }
+                Logger::log('                > MessageSet length: %s', var_export($messageSetLength, true));
 
                 $cursor += 4;
 
@@ -152,55 +127,41 @@ class FetchRequest extends AbstractRequest
 
                 $messageSet = [];
                 while ($read !== $messageSetLength) {
-                    if ($this->debug) {
-                        printf("                    > [Message #%d]\n", $numMessages);
-                    }
+                    Logger::log('                    > [Message #%d]', $numMessages);
 
                     // Read Offset
                     $offset = Packer::unpackSignedInt64(substr($response, $cursor, 8));
-                    if ($this->debug) {
-                        printf("                        > Offset: %s\n", var_export($offset, true));
-                    }
+                    Logger::log('                        > Offset: %s', var_export($offset, true));
                     $cursor += 8;
                     $read += 8;
 
                     // Read Message size
                     $messageSize = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-                    if ($this->debug) {
-                        printf("                        > Message size: %s\n", var_export($messageSize, true));
-                    }
+                    Logger::log('                        > Message size: %s', var_export($messageSize, true));
                     $cursor += 4;
                     $read += 4;
 
                     // Read CRC
                     $crc = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-                    if ($this->debug) {
-                        printf("                        > CRC: %s\n", var_export($crc, true));
-                    }
+                    Logger::log('                        > CRC: %s', var_export($crc, true));
                     $cursor += 4;
                     $read += 4;
 
                     // Read MagicByte
                     $magicByte = Packer::unpackSignedInt8(substr($response, $cursor, 1));
-                    if ($this->debug) {
-                        printf("                        > MagicByte: %s\n", var_export($magicByte, true));
-                    }
+                    Logger::log('                        > MagicByte: %s', var_export($magicByte, true));
                     $cursor += 1;
                     $read += 1;
 
                     // Read Attributes
                     $attributes = Packer::unpackSignedInt8(substr($response, $cursor, 1));
-                    if ($this->debug) {
-                        printf("                        > Attributes: %s\n", var_export($attributes, true));
-                    }
+                    Logger::log('                        > Attributes: %s', var_export($attributes, true));
                     $cursor += 1;
                     $read += 1;
 
                     // Read Key size
                     $keySize = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-                    if ($this->debug) {
-                        printf("                        > Key size: %s\n", var_export($keySize, true));
-                    }
+                    Logger::log('                        > Key size: %s', var_export($keySize, true));
                     $cursor += 4;
                     $read += 4;
 
@@ -215,17 +176,13 @@ class FetchRequest extends AbstractRequest
 
                     // Read Value length
                     $valueLength = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-                    if ($this->debug) {
-                        printf("                        > Value length: %s\n", var_export($valueLength, true));
-                    }
+                    Logger::log('                        > Value length: %s', var_export($valueLength, true));
                     $cursor += 4;
                     $read += 4;
 
                     // Read Value
                     $value = substr($response, $cursor, $valueLength);
-                    if ($this->debug) {
-                        printf("                        > Value: %s\n", var_export($value, true));
-                    }
+                    Logger::log('                        > Value: %s', var_export($value, true));
                     $cursor += $valueLength;
                     $read += $valueLength;
 

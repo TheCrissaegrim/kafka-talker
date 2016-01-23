@@ -1,6 +1,7 @@
 <?php
 namespace KafkaTalker\Request;
 
+use KafkaTalker\Logger;
 use KafkaTalker\Packer;
 
 class OffsetCommitRequest extends AbstractRequest
@@ -101,71 +102,47 @@ class OffsetCommitRequest extends AbstractRequest
         $data = $this->buildHeader(['api_version' => 2]);
 
         // Add ConsumerGroup
-        if ($this->debug) {
-            printf("> Packing ConsumerGroup length: %s\n", var_export(strlen($consumerGroup), true));
-            printf("> Packing ConsumerGroup: %s\n", var_export($consumerGroup, true));
-        }
+        Logger::log('> Packing ConsumerGroup: %s', var_export($consumerGroup, true));
         $data .= Packer::packSignedInt16(strlen($consumerGroup)) . $consumerGroup;
 
         // Add ConsumerGroupGenerationId
-        if ($this->debug) {
-            printf("> Packing ConsumerGroupGenerationId: %s\n", var_export($consumerGroupGenerationId, true));
-        }
+        Logger::log('> Packing ConsumerGroupGenerationId: %s', var_export($consumerGroupGenerationId, true));
         $data .= Packer::packSignedInt32($consumerGroupGenerationId);
 
         // Add ConsumerId
-        if ($this->debug) {
-            printf("> Packing ConsumerId length: %s\n", var_export(strlen($consumerId), true));
-            printf("> Packing ConsumerId: %s\n", var_export($consumerId, true));
-        }
+        Logger::log('> Packing ConsumerId: %s', var_export($consumerId, true));
         $data .= Packer::packSignedInt16(strlen($consumerId)) . $consumerId;
 
         // Add RetentionTime
-        if ($this->debug) {
-            printf("> Packing RetentionTime: %s\n", var_export($retentionTime, true));
-        }
+        Logger::log('> Packing RetentionTime: %s', var_export($retentionTime, true));
         $data .= Packer::packSignedInt64($retentionTime);
 
         // Add Topic count
-        if ($this->debug) {
-            printf("> Packing Topic count: %s\n", var_export(count($topics), true));
-        }
+        Logger::log('> Packing Topic count: %s', var_export(count($topics), true));
         $data .= Packer::packSignedInt32(count($topics));
 
         // Add Topics
         foreach ($topics as $topic => $partitions) {
             // Add Topic
-            if ($this->debug) {
-                printf("> Packing Topic length: %s\n", var_export(strlen($topic), true));
-                printf("> Packing Topic: %s\n", var_export($topic, true));
-            }
+            Logger::log('> Packing Topic: %s', var_export($topic, true));
             $data .= Packer::packSignedInt16(strlen($topic)) . $topic;
 
             // Add Partition count
-            if ($this->debug) {
-                printf("> Packing Partition count: %s\n", var_export(count($partitions), true));
-            }
+            Logger::log('> Packing Partition count: %s', var_export(count($partitions), true));
             $data .= Packer::packSignedInt32(count($partitions));
 
             // Add Partitions
             foreach ($partitions as $partition => $partitionParams) {
                 // Add Partition
-                if ($this->debug) {
-                    printf("> Packing Partition: %s\n", var_export(count($partition), true));
-                }
+                Logger::log('> Packing Partition: %s', var_export(count($partition), true));
                 $data .= Packer::packSignedInt32($partition);
 
                 // Add Offset
-                if ($this->debug) {
-                    printf("> Packing Offset: %s\n", var_export($partitionParams['Offset'], true));
-                }
+                Logger::log('> Packing Offset: %s', var_export($partitionParams['Offset'], true));
                 $data .= Packer::packSignedInt64($partitionParams['Offset']);
 
                 // Add Metadata
-                if ($this->debug) {
-                    printf("> Packing Metadata length: %s\n", var_export(strlen($partitionParams['Metadata']), true));
-                    printf("> Packing Metadata: %s\n", var_export($partitionParams['Metadata'], true));
-                }
+                Logger::log('> Packing Metadata: %s', var_export($partitionParams['Metadata'], true));
                 $data .= Packer::packSignedInt16(strlen($partitionParams['Metadata'])) . $partitionParams['Metadata'];
             }
         }
@@ -182,30 +159,22 @@ class OffsetCommitRequest extends AbstractRequest
         // Read response length
         $responseLength = $this->client->read(4);
         $responseLength = Packer::unpackSignedInt32($responseLength);
-        if ($this->debug) {
-            printf("Response length: %s\n", var_export($responseLength, true));
-        }
+        Logger::log('Response length: %s', var_export($responseLength, true));
 
         // Read response
         $response = $this->client->read($responseLength);
-        if ($this->debug) {
-            printf("Response (packed): %s\n", var_export($response, true));
-        }
+        Logger::log('Response (packed): %s', var_export($response, true));
 
         $cursor = 0;
 
         // Read CorrelationId
         $correlationId = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> CorrelationId: %s\n", var_export($correlationId, true));
-        }
+        Logger::log('> CorrelationId: %s', var_export($correlationId, true));
         $cursor += 4;
 
         // Read Topic count
         $topicCount = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-        if ($this->debug) {
-            printf("> Topic count: %s\n", var_export($topicCount, true));
-        }
+        Logger::log('> Topic count: %s', var_export($topicCount, true));
         $cursor += 4;
 
         // Read Topics
@@ -213,44 +182,32 @@ class OffsetCommitRequest extends AbstractRequest
         for ($i = 1; $i <= $topicCount; $i++) {
             // Read Topic length
             $topicLength = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-            if ($this->debug) {
-                printf("    > Topic length: %s\n", var_export($topicLength, true));
-            }
+            Logger::log('    > Topic length: %s', var_export($topicLength, true));
             $cursor += 2;
 
             // Read Topic
             $topic = substr($response, $cursor, $topicLength);
-            if ($this->debug) {
-                printf("    > Topic: %s\n", var_export($topic, true));
-            }
+            Logger::log('    > Topic: %s', var_export($topic, true));
             $cursor += $topicLength;
 
             // Read Parition count
             $partitionCount = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-            if ($this->debug) {
-                printf("    > Partition count: %s\n", var_export($partitionCount, true));
-            }
+            Logger::log('    > Partition count: %s', var_export($partitionCount, true));
             $cursor += 4;
 
             // Read Partitions
             $partitions = [];
             for ($j = 1; $j <= $partitionCount; $j++) {
-                if ($this->debug) {
-                    printf("        > [Partition #%d]\n", $j);
-                }
+                Logger::log('        > [Partition #%d]', $j);
 
                 // Read Partition
                 $partitionId = Packer::unpackSignedInt32(substr($response, $cursor, 4));
-                if ($this->debug) {
-                    printf("            > PartitionId: %s\n", var_export($partitionId, true));
-                }
+                Logger::log('            > PartitionId: %s', var_export($partitionId, true));
                 $cursor += 4;
 
                 // Read ErrorCode
                 $errorCode = Packer::unpackSignedInt16(substr($response, $cursor, 2));
-                if ($this->debug) {
-                    printf("            > ErrorCode: %s\n", var_export($errorCode, true));
-                }
+                Logger::log('            > ErrorCode: %s', var_export($errorCode, true));
                 $cursor += 2;
 
                 $partitions[] = [

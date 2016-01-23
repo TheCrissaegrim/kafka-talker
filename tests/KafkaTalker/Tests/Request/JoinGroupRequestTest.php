@@ -9,11 +9,11 @@ class JoinGroupRequestTest extends KafkaTalkerTest
 {
     public function testReceive()
     {
-        $client = new Client($this->host, $this->port, ['debug' => $this->debug, 'kafka_version' => '0.8.2.2']);
+        $client = new Client($this->host, $this->port, ['kafka_version' => '0.8.2.2']);
 
         $correlationId = mt_rand(-32768, 32767);
 
-        $joinGroupRequest = new JoinGroupRequest($client, ['debug' => $this->debug]);
+        $joinGroupRequest = new JoinGroupRequest($client);
         $joinGroupRequest->setCorrelationId($correlationId);
         $joinGroupRequest->send('ConsumerGroup1', 6000, 'MemberId1', 'consumer', ['ProtocolName1' => 'ProtocolMetadata1']);
         $response = $joinGroupRequest->receive();
