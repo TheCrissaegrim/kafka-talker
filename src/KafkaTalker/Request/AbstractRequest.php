@@ -23,6 +23,11 @@ abstract class AbstractRequest
         $this->client = $client;
     }
 
+    /**
+     * Build request header
+     * @param  array  $options [description]
+     * @return [type]          [description]
+     */
     protected function buildHeader($options = [])
     {
         // Set API version if passed, else default to DEFAULT_API_VERSION
@@ -46,13 +51,39 @@ abstract class AbstractRequest
         return $header;
     }
 
-    public function setCorrelationId($correlationId)
+    /**
+     * Get request correlation ID
+     * @return integer  Request correlation ID
+     */
+    public function getCorrelationId()
+    {
+        return $this->correlationId;
+    }
+
+    /**
+     * Get debug mode state
+     * @return boolean  Debug mode state
+     */
+    public function getDebug($debug)
+    {
+        return $this->debug;
+    }
+
+    /**
+     * Set request correlation ID
+     * @param integer   $correlationId  Request correlation ID
+     */
+    public function setCorrelationId($correlationId = null)
     {
         $this->correlationId = $correlationId;
 
         return $this;
     }
 
+    /**
+     * Set debug mode on/off
+     * @param boolean   $debug  True to enable debug, false to disable
+     */
     public function setDebug($debug)
     {
         $this->debug = (bool) $debug;
