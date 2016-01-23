@@ -5,6 +5,9 @@ use KafkaTalker\Packer;
 
 abstract class AbstractRequest
 {
+    const DEFAULT_API_VERSION = 0;
+    const DEFAULT_CLIENT = 'kafka-talker';
+
     protected $client;
     protected $correlationId = null;
     protected $debug = false;
@@ -22,21 +25,23 @@ abstract class AbstractRequest
 
     protected function buildHeader($options = [])
     {
-        $apiVersion = 0;
-        if (isset($options['api_version'])) {
-            $apiVersion = $options['api_version'];
-        }
+        // Set API version if passed, else default to DEFAULT_API_VERSION
+        $apiVersion = isset($options['api_version'])
+            ? $options['api_version']
+            : self::DEFAULT_API_VERSION;
+        // Set correlation ID if passed, else generate a random one
         $correlationId = isset($this->correlationId)
             ? $this->correlationId
             : mt_rand();
-        $clientId = 'hello';
+        // Set client if passed, else default to DEFAULT_CLIENT
+        $clientId = isset($options['client_id'])
+            ? $options['client_id']
+            : self::DEFAULT_CLIENT;
 
-        $packedApiKey = Packer::packSignedInt16(static::API_KEY);
-        $packedApiVersion = Packer::packSignedInt16($apiVersion);
-        $packedCorrelationId = Packer::packSignedInt32($correlationId);
-        $packedClientId = Packer::packSignedInt16(strlen($clientId)) . $clientId;
-
-        $header = $packedApiKey . $packedApiVersion . $packedCorrelationId . $packedClientId;
+        $header = Packer::packSignedInt16(static::API_KEY)
+            . Packer::packSignedInt16($apiVersion)
+            . Packer::packSignedInt32($correlationId)
+            . Packer::packStringSignedInt16($clientId);
 
         return $header;
     }
