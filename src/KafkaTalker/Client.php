@@ -82,7 +82,9 @@ class Client
             $buffer = fread($this->socket, $length);
             if ($buffer === false) {
                 // Error
+                Logger::log('[Client::read()] Error: fread returned false');
             } elseif ($buffer) {
+                Logger::log('[Client::read()] fread returned %s', var_export($buffer, true));
                 $data .= $buffer;
                 $length -= strlen($buffer);
             }
