@@ -12,6 +12,7 @@ abstract class KafkaTalkerTest extends \PHPUnit_Framework_TestCase
 
     public static function setUpBeforeClass()
     {
+        Logger::setLogCall('printf', true);
         Logger::setDebug(false);
     }
 
