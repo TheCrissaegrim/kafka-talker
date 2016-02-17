@@ -15,45 +15,6 @@ class Client
     private $socket;
     private $transport = 'stream';
 
-    public function __construct($host, $port, $options = [])
-    {
-        if (array_key_exists('transport', $options)) {
-            if (!in_array($options['transport'], ['socket', 'stream'], true)) {
-                // Throw exception
-            }
-            $this->transport = $options['transport'];
-        }
-        if (empty($host)) {
-            throw new KafkaTalkerException('Missing host');
-        }
-        if (empty($port)) {
-            throw new KafkaTalkerException('Missing port');
-        }
-
-        $this->kafkaVersion = !empty($options['kafka_version']) ? $options['kafka_version'] : null;
-        $this->apiVersion = 0;
-        if ($this->kafkaVersion) {
-            if (version_compare($this->kafkaVersion, '0.8.3', '>=')) {
-                $this->apiVersion = 2;
-            } elseif (version_compare($this->kafkaVersion, '0.8.2', '>=')) {
-                $this->apiVersion = 1;
-            }
-        }
-
-        if ($this->transport === 'socket') {
-            $this->socket = socket_create(AF_INET, SOCK_STREAM, 0);
-            socket_connect($this->socket, $host, $port);
-        } elseif ($this->transport === 'stream') {
-            $this->socket = fsockopen($host, $port, $errno, $errstr, 6000);
-
-            if ($this->socket === false) {
-                // Error
-            }
-
-            stream_set_blocking($this->socket, 0);
-        }
-    }
-
     public function close()
     {
         Logger::log('[Client::close()] Closing socket handler...');
@@ -65,9 +26,32 @@ class Client
         return $close;
     }
 
+    public function connect($host, $port)
+    {
+        if (empty($host)) {
+            throw new KafkaTalkerException('Missing host', 0);
+        }
+        if (empty($port)) {
+            throw new KafkaTalkerException('Missing port', 0);
+        }
+
+        if ($this->transport === 'socket') {
+            $this->socket = socket_create(AF_INET, SOCK_STREAM, 0);
+            socket_connect($this->socket, $host, $port);
+        } else {
+            $this->socket = fsockopen($host, $port, $errno, $errstr, 6000);
+
+            if ($this->socket === false) {
+                // Error
+            }
+
+            stream_set_blocking($this->socket, 0);
+        }
+    }
+
     public function getApiVersion()
     {
-        return $this->apiVersion;
+        return (int) $this->apiVersion;
     }
 
     public function getDebug()
@@ -78,6 +62,11 @@ class Client
     public function getKafkaVersion()
     {
         return $this->kafkaVersion;
+    }
+
+    public function getTransport()
+    {
+        return $this->transport;
     }
 
     public function read($length)
@@ -111,9 +100,9 @@ class Client
         return $data;
     }
 
-    public function setApiVersion($apiVersion)
+    public function setDebug($debug)
     {
-        $this->apiVersion = (int) $apiVersion;
+        $this->debug = (boolean) $debug;
 
         return $this;
     }
@@ -121,13 +110,24 @@ class Client
     public function setKafkaVersion($kafkaVersion)
     {
         $this->kafkaVersion = $kafkaVersion;
+        $this->apiVersion = 0;
+        if ($this->kafkaVersion) {
+            if (version_compare($this->kafkaVersion, '0.8.3', '>=')) {
+                $this->apiVersion = 2;
+            } elseif (version_compare($this->kafkaVersion, '0.8.2', '>=')) {
+                $this->apiVersion = 1;
+            }
+        }
 
         return $this;
     }
 
-    public function setDebug($debug)
+    public function setTransport($transport)
     {
-        $this->debug = (bool) $debug;
+        if (!in_array($transport, ['socket', 'stream'], true)) {
+            throw new KafkaTalkerException('Invalid transport option (available values: "socket", "stream")', 0);
+        }
+        $this->transport = $transport;
 
         return $this;
     }

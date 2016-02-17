@@ -12,7 +12,9 @@ class OffsetCommitRequestTest extends KafkaTalkerTest
 {
     public function testReceiveV0()
     {
-        $client = new Client($this->host, $this->port, ['kafka_version' => '0.8.2.2']);
+        $client = new Client();
+        $client->setKafkaVersion('0.8.2.2');
+        $client->connect($this->host, $this->port);
 
         $correlationId = mt_rand(-32768, 32767);
 
