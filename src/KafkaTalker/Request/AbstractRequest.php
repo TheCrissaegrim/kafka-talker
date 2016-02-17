@@ -82,7 +82,7 @@ abstract class AbstractRequest
      */
     public function setDebug($debug)
     {
-        $this->debug = (bool) $debug;
+        $this->debug = (boolean) $debug;
 
         return $this;
     }

@@ -9,9 +9,9 @@ class ListGroupsRequestTest extends KafkaTalkerTest
 {
     public function testOne()
     {
-        $client = new Client();
+        $client = new Client($this->host, $this->port);
         $client->setKafkaVersion('0.8.2.2');
-        $client->connect($this->host, $this->port);
+        $client->connect();
 
         $correlationId = mt_rand(-32768, 32767);
 

@@ -6,14 +6,24 @@ use KafkaTalker\Logger;
 
 class Client
 {
-    const MAX_RECONNECT = 5;
-    const MAX_WRITE_SIZE = 8192;
-
     private $apiVersion = 0;
-    private $debug = false;
+    private $host = null;
     private $kafkaVersion = null;
+    private $maxReadRetry = 5;
+    private $maxWriteRetry = 5;
+    private $port = null;
+    private $readRetryInterval = 500;
+    private $reconnectOnFail = false;
     private $socket;
     private $transport = 'stream';
+    private $writeRetryInterval = 500;
+    private $writeBufferSize = 8192;
+
+    public function __construct($host, $port)
+    {
+        $this->setHost($host);
+        $this->setPort($port);
+    }
 
     public function close()
     {
@@ -26,37 +36,39 @@ class Client
         return $close;
     }
 
-    public function connect($host, $port)
+    public function connect()
     {
-        if (empty($host)) {
+        if (empty($this->host)) {
             throw new KafkaTalkerException('Missing host', 0);
         }
-        if (empty($port)) {
+        if (empty($this->port)) {
             throw new KafkaTalkerException('Missing port', 0);
         }
 
         if ($this->transport === 'socket') {
             $this->socket = socket_create(AF_INET, SOCK_STREAM, 0);
-            socket_connect($this->socket, $host, $port);
+            socket_connect($this->socket, $this->host, $this->port);
         } else {
-            $this->socket = fsockopen($host, $port, $errno, $errstr, 6000);
+            $this->socket = fsockopen($this->host, $this->port, $errno, $errstr, 6000);
 
             if ($this->socket === false) {
-                // Error
+                throw new KafkaTalkerException(sprintf('Connection to %s:%d failed.', $this->host, $this->port), 0);
             }
 
             stream_set_blocking($this->socket, 0);
         }
+
+        return true;
     }
 
     public function getApiVersion()
     {
-        return (int) $this->apiVersion;
+        return $this->apiVersion;
     }
 
-    public function getDebug()
+    public function getHost()
     {
-        return $this->debug;
+        return $this->host;
     }
 
     public function getKafkaVersion()
@@ -64,9 +76,44 @@ class Client
         return $this->kafkaVersion;
     }
 
+    public function getMaxReadRetry()
+    {
+        return $this->maxReadRetry;
+    }
+
+    public function getMaxWriteRetry()
+    {
+        return $this->maxWriteRetry;
+    }
+
+    public function getPort()
+    {
+        return $this->port;
+    }
+
+    public function getReadRetryInterval()
+    {
+        return $this->readRetryInterval;
+    }
+
+    public function getReconnectOnFail()
+    {
+        return $this->reconnectOnFail;
+    }
+
     public function getTransport()
     {
         return $this->transport;
+    }
+
+    public function getWriteBufferSize()
+    {
+        return $this->writeBufferSize;
+    }
+
+    public function getWriteRetryInterval()
+    {
+        return $this->writeRetryInterval;
     }
 
     public function read($length)
@@ -84,10 +131,33 @@ class Client
             $data = '';
             while ($length) {
                 $buffer = fread($this->socket, $length);
-                if ($buffer === false) {
-                    // Error
-                    Logger::log('[Client::read()] Error: fread returned false');
+                if (($buffer === false) || ($buffer === '')) {
+                    Logger::log('[Client::read()] fread failed');
+
+                    if ($retry === $this->maxReadRetry) {
+                        Logger::log('[Client::read()] Max read retry (%d) reached', $retry);
+                        $reconnect = false;
+                        if ($this->reconnectOnFail) {
+                            Logger::log('[Client::read()] AutoReconnectOnFail is on. Trying to reconnect to Kafka server...');
+                            $reconnect = $this->reconnect();
+                            if ($reconnect) {
+                                Logger::log('[Client::read()]     > Reconnection successed');
+                                $retry = 0;
+                            } else {
+                                Logger::log('[Client::read()]     > Reconnection failed');
+                            }
+                        }
+                        if (!$reconnect) {
+                            $this->close();
+                            throw new KafkaTalkerException(sprintf('Socket read max retry reached (%d). Socket has been closed.', $retry), 0);
+                        }
+                    } else {
+                        Logger::log('[Client::read()] Retry %d on %d in %d milliseconds', $retry, $this->readRetryInterval, $this->readRetryInterval);
+                        usleep($this->writeRetryInterval);
+                        $retry++;
+                    }
                 } elseif ($buffer) {
+                    $retry = 0;
                     Logger::log('[Client::read()] fread returned %s', var_export($buffer, true));
                     $data .= $buffer;
                     $length -= strlen($buffer);
@@ -100,16 +170,23 @@ class Client
         return $data;
     }
 
-    public function setDebug($debug)
+    public function reconnect()
     {
-        $this->debug = (boolean) $debug;
+        $this->close();
+
+        return $this->connect();
+    }
+
+    public function setHost($host)
+    {
+        $this->host = (string) $host;
 
         return $this;
     }
 
     public function setKafkaVersion($kafkaVersion)
     {
-        $this->kafkaVersion = $kafkaVersion;
+        $this->kafkaVersion = (string) $kafkaVersion;
         $this->apiVersion = 0;
         if ($this->kafkaVersion) {
             if (version_compare($this->kafkaVersion, '0.8.3', '>=')) {
@@ -122,12 +199,61 @@ class Client
         return $this;
     }
 
+    public function setMaxReadRetry($maxReadRetry)
+    {
+        $this->maxReadRetry = (integer) $maxReadRetry;
+
+        return $this;
+    }
+
+    public function setMaxWriteRetry($maxWriteRetry)
+    {
+        $this->maxWriteRetry = (integer) $maxWriteRetry;
+
+        return $this;
+    }
+
+    public function setPort($port)
+    {
+        $this->port = (integer) $port;
+
+        return $this;
+    }
+
+    public function setReadRetryInterval($readRetryInterval)
+    {
+        $this->readRetryInterval = (integer) $readRetryInterval;
+
+        return $this;
+    }
+
+    public function setReconnectOnFail($reconnectOnFail)
+    {
+        $this->reconnectOnFail = (boolean) $reconnectOnFail;
+
+        return $this;
+    }
+
     public function setTransport($transport)
     {
         if (!in_array($transport, ['socket', 'stream'], true)) {
             throw new KafkaTalkerException('Invalid transport option (available values: "socket", "stream")', 0);
         }
         $this->transport = $transport;
+
+        return $this;
+    }
+
+    public function setWriteBufferSize($writeBufferSize)
+    {
+        $this->writeBufferSize = (integer) $writeBufferSize;
+
+        return $this;
+    }
+
+    public function setWriteRetryInterval($writeRetryInterval)
+    {
+        $this->writeRetryInterval = (integer) $writeRetryInterval;
 
         return $this;
     }
@@ -144,16 +270,44 @@ class Client
         } elseif ($this->transport === 'stream') {
             $write = [$this->socket];
 
+            $retry = 0;
             while ($written < $dataSize) {
                 $writable = stream_select($null, $write, $null, 3000, 3000);
+
+                // Stream is not writable
                 if ($writable === false) {
-                    // Stream is not writable
+                // Stream is writable
                 } elseif ($writable >= 0) {
-                    $w = fwrite($this->socket, substr($data, $written), self::MAX_WRITE_SIZE);
-                    if ($w === false) {
-                        // Write error
+                    $w = fwrite($this->socket, substr($data, $written), $this->writeBufferSize);
+
+                    // Write failed
+                    if (($w === false) || ($w === 0)) {
+                        Logger::log('[Client::write()] Write failed');
+                        $reconnect = false;
+                        if ($retry === $this->maxWriteRetry) {
+                            Logger::log('[Client::write()] Max write retry (%d) reached.', $retry);
+                            if ($this->reconnectOnFail) {
+                                Logger::log('[Client::write()] AutoReconnectOnFail is on. Trying to reconnect to Kafka server...');
+                                $reconnect = $this->reconnect();
+                                if ($reconnect) {
+                                    Logger::log('[Client::write()]     > Reconnection successed');
+                                    $retry = 0;
+                                } else {
+                                    Logger::log('[Client::write()]     > Reconnection failed');
+                                }
+                            }
+                            if (!$reconnect) {
+                                $this->close();
+                                throw new KafkaTalkerException(sprintf('Socket max write retry reached (%d). Socket has been closed.', $retry), 0);
+                            }
+                        } else {
+                            Logger::log('[Client::write()] Retry %d on %d in %d milliseconds', $retry, $this->writeRetryInterval, $this->writeRetryInterval);
+                            usleep($this->writeRetryInterval);
+                            $retry++;
+                        }
+                    } else {
+                        $written += $w;
                     }
-                    $written += $w;
                 } else {
                     // No stream changed
                 }
