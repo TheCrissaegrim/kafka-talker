@@ -124,12 +124,13 @@ class Client
             socket_recv($this->socket, $data, $length, MSG_WAITALL);
         } elseif ($this->transport === 'stream') {
             $read = [$this->socket];
-            $readable = stream_select($read, $null, $null, 3000, 3000);
 
             $retry = 0;
 
             $data = '';
             while ($length) {
+                $readable = stream_select($read, $null, $null, 3000, 3000);
+
                 $buffer = fread($this->socket, $length);
                 if (($buffer === false) || ($buffer === '')) {
                     Logger::log('[Client::read()] fread failed');
