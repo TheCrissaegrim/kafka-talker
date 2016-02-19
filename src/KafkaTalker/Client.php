@@ -152,9 +152,9 @@ class Client
                             throw new KafkaTalkerException(sprintf('Socket read max retry reached (%d). Socket has been closed.', $retry), 0);
                         }
                     } else {
-                        Logger::log('[Client::read()] Retry %d on %d in %d milliseconds', $retry, $this->readRetryInterval, $this->readRetryInterval);
-                        usleep($this->writeRetryInterval);
                         $retry++;
+                        Logger::log('[Client::read()] Retry %d on %d in %d milliseconds', $retry, $this->maxReadRetry, $this->readRetryInterval);
+                        usleep($this->writeRetryInterval);
                     }
                 } elseif ($buffer) {
                     $retry = 0;
@@ -301,9 +301,9 @@ class Client
                                 throw new KafkaTalkerException(sprintf('Socket max write retry reached (%d). Socket has been closed.', $retry), 0);
                             }
                         } else {
-                            Logger::log('[Client::write()] Retry %d on %d in %d milliseconds', $retry, $this->writeRetryInterval, $this->writeRetryInterval);
-                            usleep($this->writeRetryInterval);
                             $retry++;
+                            Logger::log('[Client::write()] Retry %d on %d in %d milliseconds', $retry, $this->maxWriteRetry, $this->writeRetryInterval);
+                            usleep($this->writeRetryInterval);
                         }
                     } else {
                         $written += $w;
