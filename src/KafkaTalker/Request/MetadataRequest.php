@@ -188,6 +188,7 @@ class MetadataRequest extends AbstractRequest
 
         return [
             'CorrelationId' => $correlationId,
+            'Brokers' => $brokers,
             'TopicMetadata' => $topicMetadatas,
         ];
     }
