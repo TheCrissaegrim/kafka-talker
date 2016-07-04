@@ -1,0 +1,23 @@
+# whether to allow init.d script to start a kafka broker ("yes", "no")
+#KAFKA_START=yes
+
+# User and group to run as (keep same user than "kafka" because Zookeeper will write files in Kafka folder)
+ZOOKEEPER_USER=kafka
+ZOOKEEPER_PIDFILE=/var/run/zookeeper.pid
+ZOOKEEPER_LOGFILE=/var/log/zookeeper/zookeeper.log
+ZOOKEEPER_CONF=/etc/kafka
+#KAFKA_GROUP=kafka
+
+#KAFKA_HOME=/usr/lib/kafka
+
+# The default JMX_PORT for Kafka Brokers is 9999.
+# Set JMX_PORT to something else to override this.
+#JMX_PORT=9999
+##KAFKA_JMX_OPTS=${KAFKA_JMX_OPTS:="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"}
+
+# Memory sizes, and logging configuration
+export KAFKA_HEAP_OPTS="-Xmx512M -Xms512M"
+##KAFKA_JVM_PERFORMANCE_OPTS="-server -XX:+UseCompressedOops -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark -XX:+DisableExplicitGC"
+#KAFKA_JVM_PERFORMANCE_OPTS="-Xms1g -Xmx1g -XX:PermSize=48m -XX:MaxPermSize=48m -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35"
+#KAFKA_LOG4J_OPTS="-Dlog4j.configuration=file:${KAFKA_CONF}/log4j.properties"
+##KAFKA_OPTS=""
